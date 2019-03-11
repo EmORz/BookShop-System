@@ -17,7 +17,7 @@ namespace BookShop
             using (var db = new BookShopContext())
             {
                 var command = (Console.ReadLine());
-                var result = GetBooksReleasedBefore(db, command);
+                var result = GetBooksByAuthor(db, command);
                 Console.WriteLine(result);
             }
         }
@@ -100,23 +100,47 @@ namespace BookShop
                 .OrderByDescending(x => x.ReleaseDate)
                 .Select(x => $"{x.Title} - {x.EditionType} - ${x.Price:f2}");
 
-
             return String.Join(Environment.NewLine, result);
         }
 
 
 
-        public static string GetAuthorNamesEndingIn(BookShopContext context, string command)
+        public static string GetAuthorNamesEndingIn(BookShopContext context, string input)
         {
-            return "";
+            //Write a GetAuthorNamesEndingIn(BookShopContext context, string input) method that returns the full names of authors,
+            //whose first name ends with a given string.
+            // Return all names in a single string, each on a new row, ordered alphabetically.
+            var result = context.Authors
+                .Where(a => a.FirstName.EndsWith(input))
+                .OrderBy(x => x.FirstName)
+                .Select(x => $"{x.FirstName} {x.LastName}");
+
+            return String.Join(Environment.NewLine, result);
         }
-        public static string GetBookTitlesContaining(BookShopContext context, string command)
+        public static string GetBookTitlesContaining(BookShopContext context, string input)
         {
-            return "";
+            /*8.	Book Search
+               Write a GetBookTitlesContaining(BookShopContext context, string input) method that returns the titles of book, which contain a given string.
+               Ignore casing.
+               Return all titles in a single string, each on a new row, ordered alphabetically.
+               */
+            var result = context.Books
+                .Where(x => x.Title.ToLower().Contains(input.ToLower()))
+                .Select(x => x.Title)
+                .OrderBy(x => x);
+
+            return String.Join(Environment.NewLine, result);
         }
         public static string GetBooksByAuthor(BookShopContext context, string command)
         {
-            return "";
+            //Write a GetBooksByAuthor(BookShopContext context, string input) method that returns all titles of books and
+            //their authors’ names for books, which are written by authors whose last names start with the given string.
+            // Return a single string with each title on a new row. Ignore casing. Order by book id ascending.
+            var titlesAuthors = context.Books
+                .Where(x => x.Author.LastName.ToLower().StartsWith(command.ToLower()))
+                    .OrderBy(x => x.BookId)
+                .Select(x => $"{x.Title} ({x.Author.FirstName} {x.Author.LastName})");
+            return String.Join(Environment.NewLine, titlesAuthors);
         }
         public static string CountBooks(BookShopContext context, string command)
         {
