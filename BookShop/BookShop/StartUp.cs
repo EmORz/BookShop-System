@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 using BookShop.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Extensions.Internal;
 
 namespace BookShop
@@ -16,9 +17,10 @@ namespace BookShop
         {
             using (var db = new BookShopContext())
             {
-                var command = (Console.ReadLine());
-                var result = GetBooksByAuthor(db, command);
-                Console.WriteLine(result);
+                //DbInitializer.ResetDatabase(db);
+                //var command = int.Parse(Console.ReadLine());
+                var result = RemoveBooks(db);
+                Console.WriteLine(result+ " books were deleted");
             }
         }
 
@@ -142,31 +144,91 @@ namespace BookShop
                 .Select(x => $"{x.Title} ({x.Author.FirstName} {x.Author.LastName})");
             return String.Join(Environment.NewLine, titlesAuthors);
         }
-        public static string CountBooks(BookShopContext context, string command)
+        public static int CountBooks(BookShopContext context, int command)
         {
-            return "";
+           // Write a CountBooks(BookShopContext context, int lengthCheck) method that returns the number of books, which have a title
+           // longer than the number given as an input.
+            var countBooks = context.Books
+                .Where(x => x.Title.Length > command)
+                .Select(x => x.Title.Length);
+            var temp = (int)countBooks.Count();
+            return temp;
         }
-        public static string CountCopiesByAuthor(BookShopContext context, string command)
+        public static string CountCopiesByAuthor(BookShopContext context)
         {
-            return "";
+            //Write a method CountCopiesByAuthor(BookShopContext context) that returns the total number of book copies for each author.
+            //Order the results descending by total book copies.
+            //Return all results in a single string, each on a new line.
+            var temp = context.Authors
+                .Select(x => new
+                {
+                    FullName = $"{x.FirstName} {x.LastName}",
+                    TotalCopies = x.Books.Sum(cop => cop.Copies )
+                })
+                .OrderByDescending(x => x.TotalCopies)
+                .Select(x => $"{x.FullName} - {x.TotalCopies}");
+            return string.Join(Environment.NewLine, temp);
         }
      
-        public static string GetTotalProfitByCategory(BookShopContext context, string command)
+        public static string GetTotalProfitByCategory(BookShopContext context)
         {
+            //Write a method GetTotalProfitByCategory(BookShopContext context) that returns the total profit of all books by category.
+            //Profit for a book can be calculated by multiplying its number of copies by the price per single book.
+            //Order the results by descending by total profit for category and ascending by category name.
+            var temp = context.Categories
+                .Select(x => new
+                {
+                    TypeCatecories = x.Name,
+                    TotalProfit = x.CategoryBooks.Select(a => a.Book.Price*a.Book.Copies).Sum()
+                })
+                .OrderByDescending( x => x.TotalProfit)
+                .ThenBy(x => x.TypeCatecories)
+                .Select(b => $"{b.TypeCatecories} ${b.TotalProfit}" );
+            return string.Join(Environment.NewLine, temp);
+        }
+        public static string GetMostRecentBooks(BookShopContext context)
+        {
+           // Get the most recent books by categories in a GetMostRecentBooks(BookShopContext context) method.The categories should
+           //be ordered by name alphabetically. Only take the top 3 most recent books from each category -ordered by release date(descending).
+           //Select and print the category name, and for each book – its title and release year.
+            //var temp = context.Categories
+            //    .Select(x => new
+            //    {
+            //        Categories = x.Name,
+            //        BookCount = x.CategoryBooks.Select(b => b.Book).Count(),
+            //        TopThreee = string.Join(Environment.NewLine, x.CategoryBooks
+            //            .Select(sb => sb.Book)
+            //            .OrderByDescending(c => c.ReleaseDate)
+            //            .Take(3)
+            //            .Select(s => $"{s.ReleaseDate} {s.ReleaseDate.Value.Year}"))
+            //            .OrderBy(x => x.)
+                        
+            //    });
             return "";
         }
-        public static string GetMostRecentBooks(BookShopContext context, string command)
+        public static void IncreasePrices(BookShopContext context)
         {
-            return "";
-        }
-        public static string IncreasePrices(BookShopContext context, string command)
-        {
-            return "";
+            //Write a method IncreasePrices(BookShopContext context) that increases the prices of all books released before 2010 by 5.
+            var increasePrice = context.Books
+                .Where(x => x.ReleaseDate.Value.Year < 2010);
+            foreach (var inc in increasePrice)
+            {
+                inc.Price += 5;
+            }
+            context.SaveChanges();
         }
 
-        public static string RemoveBooks(BookShopContext context, string command)
+        public static int RemoveBooks(BookShopContext context)
         {
-            return "";
+            //Write a method RemoveBooks(BookShopContext context) that removes from the database those books, which have less than 4200 copies.
+            //Return an int -the number of books that were deleted from the database.
+            var getBooksWihLessCopies = context.Books
+                .Where(x => x.Copies < 4200).ToArray();
+
+            context.RemoveRange(getBooksWihLessCopies);
+            context.SaveChanges();
+
+            return getBooksWihLessCopies.Length;
         }
 
 
