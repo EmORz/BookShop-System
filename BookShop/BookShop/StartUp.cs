@@ -1,15 +1,13 @@
-﻿using System;
+﻿using BookShop.Models.Enums;
+using Microsoft.EntityFrameworkCore.Extensions.Internal;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using BookShop.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Extensions.Internal;
 
 namespace BookShop
 {
     using BookShop.Data;
-    using BookShop.Initializer;
 
     public class StartUp
     {
@@ -17,10 +15,12 @@ namespace BookShop
         {
             using (var db = new BookShopContext())
             {
-                //DbInitializer.ResetDatabase(db);
+                var str = Console.ReadLine();
+               // DbInitializer.ResetDatabase(db);
                 //var command = int.Parse(Console.ReadLine());
-                var result = RemoveBooks(db);
-                Console.WriteLine(result+ " books were deleted");
+                var result = GetAuthorNamesEndingIn(db, str);
+                //Console.WriteLine(result+ " books were deleted");
+                Console.WriteLine(result);
             }
         }
 
@@ -104,19 +104,15 @@ namespace BookShop
 
             return String.Join(Environment.NewLine, result);
         }
-
-
-
         public static string GetAuthorNamesEndingIn(BookShopContext context, string input)
         {
             //Write a GetAuthorNamesEndingIn(BookShopContext context, string input) method that returns the full names of authors,
             //whose first name ends with a given string.
             // Return all names in a single string, each on a new row, ordered alphabetically.
             var result = context.Authors
-                .Where(a => a.FirstName.EndsWith(input))
-                .OrderBy(x => x.FirstName)
-                .Select(x => $"{x.FirstName} {x.LastName}");
-
+                .Where(a => a.FirstName.EndsWith(input) && a.FirstName!=null)
+                .Select(x => x.FirstName == null? $"{x.LastName}": $"{x.FirstName} {x.LastName}")
+                .OrderBy(x => x);
             return String.Join(Environment.NewLine, result);
         }
         public static string GetBookTitlesContaining(BookShopContext context, string input)
@@ -188,23 +184,25 @@ namespace BookShop
         }
         public static string GetMostRecentBooks(BookShopContext context)
         {
-           // Get the most recent books by categories in a GetMostRecentBooks(BookShopContext context) method.The categories should
-           //be ordered by name alphabetically. Only take the top 3 most recent books from each category -ordered by release date(descending).
-           //Select and print the category name, and for each book – its title and release year.
-            //var temp = context.Categories
-            //    .Select(x => new
-            //    {
-            //        Categories = x.Name,
-            //        BookCount = x.CategoryBooks.Select(b => b.Book).Count(),
-            //        TopThreee = string.Join(Environment.NewLine, x.CategoryBooks
-            //            .Select(sb => sb.Book)
-            //            .OrderByDescending(c => c.ReleaseDate)
-            //            .Take(3)
-            //            .Select(s => $"{s.ReleaseDate} {s.ReleaseDate.Value.Year}"))
-            //            .OrderBy(x => x.)
-                        
-            //    });
-            return "";
+            // Get the most recent books by categories in a GetMostRecentBooks(BookShopContext context) method.The categories should
+            //be ordered by name alphabetically. Only take the top 3 most recent books from each category -ordered by release date(descending).
+            //Select and print the category name, and for each book – its title and release year.
+            var temp = context.Categories
+                .Select(x => new
+                {
+                    Name = x.Name,
+                    BookCount = x.CategoryBooks
+                                 .Select(b => b.Book)
+                                 .Count(),
+                    TopThreee = string.Join(Environment.NewLine, x.CategoryBooks
+                        .Select(sb => sb.Book)
+                        .OrderByDescending(c => c.ReleaseDate)
+                        .Take(3)
+                        .Select(s => $"{s.Title} {s.ReleaseDate.Value.Year}"))
+                })
+                .OrderBy(a => a.Name)
+                .Select(d => $"--{d.Name}{Environment.NewLine}{d.TopThreee}");
+            return string.Join(Environment.NewLine, temp);
         }
         public static void IncreasePrices(BookShopContext context)
         {
