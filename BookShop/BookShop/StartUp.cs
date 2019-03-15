@@ -15,10 +15,10 @@ namespace BookShop
         {
             using (var db = new BookShopContext())
             {
-                var str = Console.ReadLine();
+                //var str = Console.ReadLine();
                // DbInitializer.ResetDatabase(db);
                 //var command = int.Parse(Console.ReadLine());
-                var result = GetAuthorNamesEndingIn(db, str);
+                var result = GetMostRecentBooks(db);
                 //Console.WriteLine(result+ " books were deleted");
                 Console.WriteLine(result);
             }
@@ -191,18 +191,31 @@ namespace BookShop
                 .Select(x => new
                 {
                     Name = x.Name,
-                    BookCount = x.CategoryBooks
-                                 .Select(b => b.Book)
-                                 .Count(),
-                    TopThreee = string.Join(Environment.NewLine, x.CategoryBooks
-                        .Select(sb => sb.Book)
-                        .OrderByDescending(c => c.ReleaseDate)
-                        .Take(3)
-                        .Select(s => $"{s.Title} {s.ReleaseDate.Value.Year}"))
+                    BookCount =
+                        x.CategoryBooks
+                            .Select(b => b.Book)
+                            .Count(),
+                    TopThreee =
+                        x.CategoryBooks
+                            .Select(sb => sb.Book)
+                            .OrderByDescending(c => c.ReleaseDate)
+                            .Take(3)
+                            .Select(s => $"{s.Title} ({s.ReleaseDate.Value.Year})")
                 })
-                .OrderBy(a => a.Name)
-                .Select(d => $"--{d.Name}{Environment.NewLine}{d.TopThreee}");
-            return string.Join(Environment.NewLine, temp);
+                .OrderBy(a => a.Name);
+                //.Select(d => $"--{d.Name}{Environment.NewLine}{d.TopThreee}")
+                //.ToArray();
+            var temporal = temp;
+            StringBuilder stb = new StringBuilder();
+            foreach (var v in temporal)
+            {
+                stb.AppendLine("--" + v.Name);
+                foreach (var vv in v.TopThreee)
+                {
+                    stb.AppendLine(vv);
+                }
+            }
+            return stb.ToString().Trim();
         }
         public static void IncreasePrices(BookShopContext context)
         {
